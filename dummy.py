@@ -112,7 +112,7 @@ def random_commit_message():
         "content",
         "directory",
     ]
-    return f"{random.choice(verbs)} {random.choice(objects)}"
+    return f"[dummy] {random.choice(verbs)} {random.choice(objects)}"
 
 
 def git_commit():
