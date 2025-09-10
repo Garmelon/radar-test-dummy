@@ -7,6 +7,7 @@ import subprocess
 import argparse
 
 DIR = "dummy"
+MAX_DEPTH = 6  # max directory nesting depth
 os.makedirs(DIR, exist_ok=True)
 
 
@@ -22,6 +23,14 @@ def random_content():
     return (
         "".join(random.choices(string.ascii_letters + string.digits + " ", k=50)) + "\n"
     )
+
+
+def depth(path):
+    """Return relative depth of path inside DIR."""
+    rel = os.path.relpath(path, DIR)
+    if rel == ".":
+        return 0
+    return rel.count(os.sep) + 1
 
 
 def pick_random_dir(base_dir):
@@ -45,6 +54,10 @@ def create_file():
 
 def create_directory_with_file():
     parent = pick_random_dir(DIR)
+    if depth(parent) >= MAX_DEPTH:
+        # too deep, just create a file instead
+        create_file()
+        return
     new_dir = os.path.join(parent, random_dirname())
     os.makedirs(new_dir, exist_ok=True)
     filepath = os.path.join(new_dir, random_filename())
@@ -114,8 +127,7 @@ def git_commit():
 
 def main(n_actions):
     actions = [create_file, delete_file, edit_file, create_directory_with_file]
-    # Heavier weight for edits, then creates, rare deletes, rare dir creation
-    weights = [3, 1, 6, 2]
+    weights = [3, 1, 6, 2]  # edit > create > dir > delete
 
     for _ in range(n_actions):
         action = random.choices(actions, weights=weights, k=1)[0]
