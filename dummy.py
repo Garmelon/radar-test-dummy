@@ -4,6 +4,7 @@ import os
 import random
 import string
 import subprocess
+import argparse
 
 DIR = "dummy"
 os.makedirs(DIR, exist_ok=True)
@@ -11,6 +12,10 @@ os.makedirs(DIR, exist_ok=True)
 
 def random_filename():
     return "".join(random.choices(string.ascii_lowercase, k=8)) + ".txt"
+
+
+def random_dirname():
+    return "".join(random.choices(string.ascii_lowercase, k=6))
 
 
 def random_content():
@@ -36,6 +41,16 @@ def create_file():
     with open(filepath, "w") as f:
         f.write(random_content())
     print(f"Created: {filepath}")
+
+
+def create_directory_with_file():
+    parent = pick_random_dir(DIR)
+    new_dir = os.path.join(parent, random_dirname())
+    os.makedirs(new_dir, exist_ok=True)
+    filepath = os.path.join(new_dir, random_filename())
+    with open(filepath, "w") as f:
+        f.write(random_content())
+    print(f"Created directory and file: {filepath}")
 
 
 def delete_file():
@@ -74,7 +89,16 @@ def random_commit_message():
         "Modify",
         "Change",
     ]
-    objects = ["file", "structure", "feature", "dummy", "logic", "data", "content"]
+    objects = [
+        "file",
+        "structure",
+        "feature",
+        "dummy",
+        "logic",
+        "data",
+        "content",
+        "directory",
+    ]
     return f"{random.choice(verbs)} {random.choice(objects)}"
 
 
@@ -88,11 +112,22 @@ def git_commit():
         print(f"Git commit failed: {e}")
 
 
-# Weighted action selection
-actions = [create_file, delete_file, edit_file]
-weights = [3, 1, 6]  # edit > create > delete
+def main(n_actions):
+    actions = [create_file, delete_file, edit_file, create_directory_with_file]
+    # Heavier weight for edits, then creates, rare deletes, rare dir creation
+    weights = [3, 1, 6, 2]
+
+    for _ in range(n_actions):
+        action = random.choices(actions, weights=weights, k=1)[0]
+        action()
+
+    git_commit()
+
 
 if __name__ == "__main__":
-    action = random.choices(actions, weights=weights, k=1)[0]
-    action()
-    git_commit()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-n", type=int, default=10, help="Number of actions before committing"
+    )
+    args = parser.parse_args()
+    main(args.n)
